@@ -775,14 +775,12 @@ class ToshibaController final : public climate::Climate, public Component {
 
         supported_traits_.set_supported_custom_fan_modes({CUSTOM_FAN_MODE_LOW_MEDIUM, CUSTOM_FAN_MODE_MEDIUM_HIGH});
 
-        supported_traits_.set_supports_current_temperature(true);
-        supported_traits_.set_supports_two_point_target_temperature(false);
-        supported_traits_.set_supports_action(false);
+        supported_traits_.add_feature_flags(climate::CLIMATE_SUPPORTS_CURRENT_TEMPERATURE);
         supported_traits_.set_visual_min_temperature(
             (int)std::min(MIN_TEMP_SETPOINT_HEATING, MIN_TEMP_SETPOINT_COOLING));
         supported_traits_.set_visual_max_temperature(MAX_TEMP_SETPOINT);
         supported_traits_.set_visual_current_temperature_step(0.1);
-        supported_traits_.set_visual_target_temperature_step(0.5);
+        supported_traits_.set_visual_target_temperature_step(1.0);
     }
 
     void automatic_eight_degrees_switchover(uint8_t target_temperature) {
