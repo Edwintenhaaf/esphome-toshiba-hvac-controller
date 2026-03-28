@@ -163,6 +163,7 @@ class ToshibaController final : public climate::Climate, public Component {
     uint32_t last_partial_register_request_millis_ = 0;
     uint32_t last_full_register_request_millis_ = 0;
     uint32_t last_external_temperature_sensor_control_millis_ = 0;
+    uint8_t pending_eight_degrees_count_ = 0;  // debounce: require 2 consecutive EIGHT_DEGREES readings
 
     CustomSwitch* switch_internal_thermistor_{nullptr};
     CustomSwitch* switch_ionizer_{nullptr};
@@ -460,6 +461,15 @@ class ToshibaController final : public climate::Climate, public Component {
                 break;
             case ToshibaSpecialModes::SPECIAL_MODE_EIGHT_DEGREES:
                 ESP_LOGI(TAG, "[REGISTER] received special mode: %s", "EIGHT_DEGREES");
+                // Debounce: spurious EIGHT_DEGREES readings occur during reconnect handshake.
+                // Require 2 consecutive confirmations before accepting the transition.
+                // set_special_mode_select (user command) bypasses this and updates directly.
+                if (++pending_eight_degrees_count_ < 2) {
+                    ESP_LOGW(TAG, "[REGISTER] EIGHT_DEGREES not confirmed yet (count=%d), deferring state update",
+                             pending_eight_degrees_count_);
+                    updating_from_ac_ = false;
+                    return;
+                }
                 this->special_mode_select_->publish_state("8 Degrees");
                 break;
             case ToshibaSpecialModes::SPECIAL_MODE_SLEEP_CARE:
@@ -498,6 +508,9 @@ class ToshibaController final : public climate::Climate, public Component {
                 ESP_LOGE(TAG, "[REGISTER] received unknown special mode: %s",
                          format_hex_pretty((uint8_t)value).c_str());
                 break;
+        }
+        if (value != ToshibaSpecialModes::SPECIAL_MODE_EIGHT_DEGREES) {
+            pending_eight_degrees_count_ = 0;
         }
         this->internal_special_mode_ = value;
         updating_from_ac_ = false;
