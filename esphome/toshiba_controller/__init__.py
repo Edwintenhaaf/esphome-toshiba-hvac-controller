@@ -22,6 +22,7 @@ CONF_SPECIAL_MODE_SELECT_ID = "special_mode_select_id"
 CONF_SILENT_MODE_SELECT_ID = "silent_mode_select_id"
 CONF_FIREPLACE_SELECT_ID = "fireplace_select_id"
 CONF_SWING_MODE_SELECT_ID = "swing_mode_select_id"
+CONF_FIXED_POSITION_SELECT_ID = "fixed_position_select_id"
 CONF_POWER_SELECT_ID = "power_select_id"
 CONF_SMART_THERMOSTAT_MULTIPLIER = "smart_thermostat_multiplier"
 CONF_SMART_THERMOSTAT_RUNAWAY_PROTECTION = "smart_thermostat_runaway_protection"
@@ -50,6 +51,7 @@ CONFIG_SCHEMA = (
             cv.Optional(CONF_SILENT_MODE_SELECT_ID): cv.use_id(select.Select),
             cv.Optional(CONF_FIREPLACE_SELECT_ID): cv.use_id(select.Select),
             cv.Required(CONF_SWING_MODE_SELECT_ID): cv.use_id(select.Select),
+            cv.Optional(CONF_FIXED_POSITION_SELECT_ID): cv.use_id(select.Select),
             cv.Required(CONF_POWER_SELECT_ID): cv.use_id(select.Select),
             cv.Optional(CONF_SMART_THERMOSTAT_MULTIPLIER, default=3.0): cv.float_range(
                 min=1.0, max=10.0
@@ -168,6 +170,9 @@ async def to_code(config):
     if CONF_FIREPLACE_SELECT_ID in config:
         fireplace_sel = await cg.get_variable(config[CONF_FIREPLACE_SELECT_ID])
         cg.add(var.set_fireplace_select_ptr(fireplace_sel))
+    if CONF_FIXED_POSITION_SELECT_ID in config:
+        fixed_pos_sel = await cg.get_variable(config[CONF_FIXED_POSITION_SELECT_ID])
+        cg.add(var.set_fixed_position_select_ptr(fixed_pos_sel))
 
     # Wire up optional sensor outputs
     sensor_map = [

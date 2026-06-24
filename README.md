@@ -33,7 +33,27 @@ This fork is based on [florianbrede-ayet/esphome-toshiba-hvac-controller](https:
 **Extended `__init__.py`**
 - Optional `silent_mode_select_id` — wire up a silent mode select entity
 - Optional `fireplace_select_id` — wire up a fireplace mode select entity
-- Optional sensor outputs: `outdoor_temperature`, `fcu_air_temp`, `fcu_setpoint`, `fcu_tc_temp`, `fcu_tcj_temp`, `fcu_fan_rpm`, `cdu_td_temp`, `cdu_ts_temp`, `cdu_te_temp`, `cdu_load`, `cdu_iac`
+- Optional `fixed_position_select_id` — wire up a fixed vane position select (separate from swing mode, like the native Toshiba app)
+- Optional sensor outputs: `outdoor_temperature`, `fcu_air_temp`, `fcu_setpoint`, `fcu_tc_temp`, `fcu_tcj_temp`, `fcu_fan_rpm`, `cdu_td_temp`, `cdu_ts_temp`, `cdu_te_temp`, `cdu_load`, `cdu_iac`, `power_watt`, `self_cleaning`
+
+**Swing / Fixed Position split**
+- The swing mode selector now only contains Off, Vertical, Horizontal, and Vertical & Horizontal
+- Fixed vane positions (Fixed 1–5) are in a separate optional selector, matching the native Toshiba app
+- Both selectors mutually exclude each other: selecting a swing mode resets fixed to Off and vice versa
+- Units that only support vertical swing (e.g. some ceiling models) can omit the fixed position selector
+
+**Self-cleaning detection**
+- After turning off the AC (via HA or IR remote), the unit may enter a self-cleaning cycle (fan dries the evaporator)
+- Previously, the AC reported `POWER_STATE=ON` during this cycle, incorrectly showing the AC as "on" in HA
+- Now: if the AC reports ON within 120 seconds of a power-off, it is recognized as self-cleaning and HA stays OFF
+- A `self_cleaning` sensor (0/1) indicates when the self-cleaning cycle is active
+
+**Special mode race condition fix**
+- 2-second grace period after writing `SPECIAL_MODE` register — stale read responses are ignored
+- One-time boot reset of transient modes (silent/fireplace) to Standard after ESP reboot
+
+**Realtime power sensor**
+- `power_watt` sensor reads register `0xEE` for realtime power consumption in Watts (16-bit little-endian)
 
 Missing functionality:
 * Manual defrost (probably unsupported over UART WIFI interface)
